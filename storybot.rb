@@ -25,8 +25,18 @@ while not user_response.include? "cya" do
 	if is_command?(user_response)
 		handle_commands(user_response)
 	else
+		topic_sentence = user_response
 		puts "Let me tell you a story.......\n\n"
-		establish_context(user_response)
+
+		while true do
+			story = get_story(topic_sentence)
+			puts story
+			puts 'Would you like me to continue? [y/n]'
+			
+			if gets.chomp.include? 'n' then break end
+
+			topic_sentence = story[story.length / 2, story.length - 1].join(' ')
+		end
 	end
 
 	print "\n>> "

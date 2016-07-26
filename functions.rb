@@ -1,34 +1,32 @@
 require 'wordnet'
 require 'pp'
 
+$relevant_pos = ['noun', 'verb', 'adjective', 'adverb']
+$sentences_must_contain = ['he', 'she', 'it', 'we', 'me', 'i', 'they']
 
-def establish_context(sentence)
-	nouns, noun_samples = get_words_by_pos(sentence, 'noun')
-	verbs, verb_samples = get_words_by_pos(sentence, 'verb')
-	adjectives, adjective_samples = get_words_by_pos(sentence, 'adjective')
 
-	print_data(nouns, noun_samples, verbs, verb_samples, adjectives, adjective_samples)
-	story = get_story(noun_samples, verb_samples, adjective_samples)
+def get_story(topic_sentence)
+	all_synsets = []
+	all_words = []
+	matching_words = []
+	matching_synsets = []
 
-	puts story
-	puts '...Want me to continue? [y/n]'
-
-	if gets.chomp.include? 'y'
-		establish_context(story.last(story.size / 2).join(''))
-		puts '\n...Want me to continue? [y/n]'
+	$relevant_pos.each do |pos|
+		matching_words, matching_synsets = get_words_and_synsets_by_pos(topic_sentence, pos)
+		all_words.push matching_words
+		all_synsets.push matching_synsets
 	end
 
+	return get_sample_sentences all_synsets.flatten
 end
 
 
-# Takes a sentence and returns a hash of all the words in the sentence
-# that belong to the specified part of speech and sets them as the
-# keys. A list of sample sentences for each noun are the
-# corresponding values.
-def get_words_by_pos(sentence, pos)
+# Takes a sentence and a part of speech like "noun" and returns a touple 
+# of all words in the sentence that belong to that part of speech and their synsets
+def get_words_and_synsets_by_pos(sentence, pos)
 	words = sentence.downcase.strip.split(' ')
-	nouns_in_sentence = {}
-	samples = []
+	matching_words = []
+	matching_synsets = []
 
 	words.each do |word|
 		word_synsets = $lex.lookup_synsets(word)
@@ -41,19 +39,38 @@ def get_words_by_pos(sentence, pos)
 
 		word_synsets.each do |synset|
 			if synset.part_of_speech == pos
-				nouns_in_sentence[word] = synset.lexical_domain
-				samples.push(synset.samples)
+				matching_words.push word
+				matching_synsets.push synset
 			end
 		end
 	end
-	return nouns_in_sentence, samples
+	return matching_words, matching_synsets
+end
+
+
+# Returns a list of all relevant sample sentences found for all synsets in the
+# given list
+def get_sample_sentences(synsets)
+	sample_sentences = []
+
+	synsets.each do |synset|
+
+		if $print_synsets then PP.pp synset end
+
+		synset.samples.each do |sample|
+			if not (sample.split(' ') & $sentences_must_contain).empty?
+				sample_sentences.push sample
+			end
+		end
+	end
+	return sample_sentences
 end
 
 
 def is_command?(sentence)
 	words = sentence.strip.split(' ')
 
-	if words.first[0].to_s == '\\' then 
+	if words.first[0].to_s == '\\' 
 		return true 
 	else 
 		return false
@@ -182,23 +199,4 @@ def print_data(nouns, noun_samples, verbs, verb_samples, adjectives, adjective_s
 		puts 'ADJECTIVE SAMPLES__'
 		PP.pp adjective_samples
 	end
-end
-
-
-def get_story(noun_samples, verb_samples, adjective_samples)
-
-	all_sentences = noun_samples + verb_samples + adjective_samples
-	all_sentences.shuffle
-	story = []
-
-	all_sentences.each do |sentence|
-		if not (sentence.nil? or sentence[0].nil?)
-			words = sentence[0].split(' ')
-			if words.include? 'he' or words.include? 'she' or words.include? 'i'	
-				story.push(sentence)
-			end
-		end
-	end
-
-	return story
 end
