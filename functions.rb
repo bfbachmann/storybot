@@ -2,7 +2,54 @@ require 'wordnet'
 require 'pp'
 
 $relevant_pos = ['noun', 'verb', 'adjective', 'adverb']
-$sentences_must_contain = ['he', 'she', 'it', 'we', 'me', 'i', 'they']
+$sentences_must_contain = ['he', 'him']
+$sentences_cant_contain = []
+
+def tell_in_chunks(user_response)
+	topic_sentence = user_response
+	puts "Let me tell you a story.......\n\n"
+
+	while true do
+		story = get_story(topic_sentence)
+		puts story
+
+		if $speak
+			exec 'say ' + story.to_s
+		end
+
+		if story.empty? then break end
+		
+		if gets.chomp.include? 'end' then break end
+
+		topic_sentence = story[story.length / 2, story.length - 1].join(' ')
+	end
+end
+
+
+def tell_in_sentences(user_response)
+	topic_sentence = user_response
+	puts "Let me tell you a story.......\n\n"
+
+	while true do
+		story = get_story(topic_sentence)
+		sentence = story.sample
+		puts sentence
+
+		if $speak
+			system 'echo say "' + sentence.to_s + '"'
+		end
+
+		if story.empty? then break end
+		
+		if gets.chomp.include? 'end' then break end
+
+		if story.length > 20
+			topic_sentence = story[-5, story.length - 1].join(' ')
+		else
+			topic_sentence = story[story.length / 2, story.length - 1].join(' ')
+		end
+	end
+end
 
 
 def get_story(topic_sentence)
@@ -79,6 +126,23 @@ end
 
 
 def handle_commands(commands)
+	if commands.include? '~speak'
+		$speak = false
+		puts 'Speak OFF'
+	elsif commands.include? 'speak'
+		$speak = true
+		puts 'Speak ON'
+	end
+			
+
+	if commands.include? 'chunks'
+		puts 'Chunks mode'
+		$mode = :chunks
+	elsif commands.include? 'sentences'
+		puts 'Sentence mode'
+		$mode = :sentences
+	end
+
 	if commands.include? '~synsets'
 		$print_synsets = false
 		puts 'print synsets OFF'

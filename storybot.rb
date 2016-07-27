@@ -14,9 +14,16 @@ $print_nouns = false
 $print_verbs = false
 $print_adjectives = false
 
+$mode = :chunks
+$talk = false
 
 
-puts "Hello! I'm Storybot.\n To end the conversation enter \'cya\'.\n For help enter '\\help'.\n What would you like to complain about today?\n\n>>"
+puts "Hello! I'm Storybot.
+To end the conversation enter \'cya\'.
+For help enter '\\help'.
+To end a story enter 'end'. 
+What would you like to complain about today?\n\n>>"
+
 user_response = gets.chomp
 
 while not user_response.include? "cya" do
@@ -24,19 +31,10 @@ while not user_response.include? "cya" do
 
 	if is_command?(user_response)
 		handle_commands(user_response)
+	elsif $mode == :chunks
+		tell_in_chunks(user_response)
 	else
-		topic_sentence = user_response
-		puts "Let me tell you a story.......\n\n"
-
-		while true do
-			story = get_story(topic_sentence)
-			puts story
-			puts 'Would you like me to continue? [y/n]'
-			
-			if gets.chomp.include? 'n' then break end
-
-			topic_sentence = story[story.length / 2, story.length - 1].join(' ')
-		end
+		tell_in_sentences(user_response)
 	end
 
 	print "\n>> "
